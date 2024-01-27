@@ -5,6 +5,8 @@ from werkzeug.utils import secure_filename
 from api.files_service import allowed_file, upload_text, upload_pdf
 
 from api.ai_service import getanswer
+from waitress import serve
+import api as my_app
 
 app = Flask(__name__)
 
@@ -43,5 +45,5 @@ def processclaim():
     except:
         return jsonify({"Status":"Failure --- some error occured"})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    serve(my_app, host="localhost", port=5005)
