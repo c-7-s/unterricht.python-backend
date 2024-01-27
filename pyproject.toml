@@ -21,6 +21,7 @@ faiss-cpu = "*"
 supabase = "*"
 werkzeug = "*"
 scikit-learn = "*"
+waitress = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.0"

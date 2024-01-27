@@ -45,7 +45,7 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question"],
     output_parser=output_parser
 )
-chain = load_qa_chain(OpenAI(temperature=0), chain_type="map_rerank", return_intermediate_steps=True, prompt=PROMPT)
+chain = load_qa_chain(OpenAI(temperature=1), chain_type="map_rerank", return_intermediate_steps=True, prompt=PROMPT)
 
 
 def getanswer(query):
