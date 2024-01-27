@@ -20,6 +20,10 @@ python-dotenv = "*"
 faiss-cpu = "*"
 supabase = "*"
 werkzeug = "*"
+scikit-learn = "*"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.0"
 
 [build-system]
 requires = ["poetry-core"]
