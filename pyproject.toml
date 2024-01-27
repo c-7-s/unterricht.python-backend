@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "unterricht-python-backend"
+version = "0.1.0"
+description = ""
+authors = ["CTS <cts_anubis@gmx.de>"]
+readme = "README.md"
+packages = [{include = "unterricht"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+langchain = "^0.1.0"
+langchain-community = "^0.0.16"
+langchain-openai = "*"
+Flask = "^3.0.0"
+ConfigParser = "*"
+pypdf = "*"
+openai = "*"
+tiktoken = "*"
+python-dotenv = "*"
+faiss-cpu = "*"
+supabase = "*"
+werkzeug = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
