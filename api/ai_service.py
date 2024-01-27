@@ -11,8 +11,6 @@ from dotenv import load_dotenv
 
 load_dotenv("../.env")
 
-app = Flask(__name__)
-
 # Initialize Supabase Client
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_API_KEY")
@@ -68,18 +66,3 @@ def getanswer(query):
         text_reference+=results["input_documents"][i].page_content
     output={"Answer":results["output_text"],"Reference":text_reference}
     return output
-
-
-@app.route('/docqna',methods = ["POST"])
-def processclaim():
-    try:
-        input_json = request.get_json(force=True)
-        query = input_json["query"]
-        output=getanswer(query)
-        return output
-    except:
-        return jsonify({"Status":"Failure --- some error occured"})
-    
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8095, debug=True)
