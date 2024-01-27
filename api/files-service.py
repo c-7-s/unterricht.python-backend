@@ -16,11 +16,12 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_API_KEY")
 supabase_client: Client = create_client(url, key)
 
-UPLOAD_FOLDER = 'uploads/'
+UPLOAD_FOLDER = 'docs/'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = "alklkjhasdkjfhkasljd"
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -31,12 +32,12 @@ def upload_file():
         return jsonify({'error': 'No file selected for uploading'}), 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config["upload_folder"], filename))
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         if file.mimetype == 'text/plain':
-            upload_text(os.path.join(app.config["upload_folder"], filename))
+            upload_text(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         elif file.mimetype == 'application/pdf':
-            upload_pdf(os.path.join(app.config["upload_folder"], filename))
-        os.remove(os.path.join(app.config["upload_folder"], filename))
+            upload_pdf(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         return jsonify({'message': 'File uploaded successfully'}), 200
     return jsonify({'error': 'Unsupported file type'}), 400
 
@@ -50,17 +51,20 @@ def upload_text(path):
         CharacterTextSplitter(separator=['\n\n', '\n', '. ', ' ']))
     supa = SupabaseVectorStore.from_documents(
         output, OpenAIEmbeddings(),
-        supabase_client, 'documents')
+        supabase_client, 'documents_new')
     print(supa)
 
 def upload_pdf(path):
-    loader = PyPDFLoader(path, split_pages=False)
+    loader = PyPDFLoader(path)
     output = loader.load_and_split(
         CharacterTextSplitter(separator='. '))
     supa = SupabaseVectorStore.from_documents(
         output, OpenAIEmbeddings(),
-        supabase_client, 'documents')
+        client=supabase_client,
+        table_name="documents_new",
+    )
     print(supa)
 
 if __name__ == '__main__':
+    app.debug = True
     app.run()

@@ -28,8 +28,6 @@ docembeddings.save_local("llm_faiss_index")
 docembeddings = FAISS.load_local("llm_faiss_index",OpenAIEmbeddings())
 
 
-
-
 prompt_template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 This should be in the following format:
@@ -69,7 +67,6 @@ def getanswer(query):
         text_reference+=results["input_documents"][i].page_content
     output={"Answer":results["output_text"],"Reference":text_reference}
     return output
-
 
 
 @app.route('/docqna',methods = ["POST"])
