@@ -5,9 +5,9 @@ from werkzeug.utils import secure_filename
 from api.files_service import allowed_file, upload_text, upload_pdf
 from api.ai_service import getanswer
 
-import utils
+from utils.utils import read_yaml_config
 
-job_config = utils.read_yaml_config("config/interface_config.yaml")
+job_config = read_yaml_config("config/interface_config.yaml")
 
 UPLOAD_FOLDER = job_config.upload_source_folder
 
