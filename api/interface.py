@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from api.files_service import allowed_file, upload_text, upload_pdf
 from api.ai_service import getanswer
 
-from config import interface_config
+from api.config import interface_config
 
 UPLOAD_FOLDER = interface_config.upload_source_folder
 
