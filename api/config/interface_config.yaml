@@ -1,0 +1,4 @@
+upload_source_folder: 'docs/'
+upload_allowed_formats: 
+  - 'pdf'
+  - 'txt'

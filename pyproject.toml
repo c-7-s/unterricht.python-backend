@@ -22,6 +22,7 @@ supabase = "*"
 werkzeug = "*"
 scikit-learn = "*"
 gunicorn = "*"
+pydantic = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.0"

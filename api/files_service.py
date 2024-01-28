@@ -7,10 +7,11 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 from supabase.client import create_client, Client
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
-
 load_dotenv("../.env")
 
+ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
+
+# Initialize Supabase Client
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_API_KEY")
 supabase_client: Client = create_client(url, key)
@@ -24,8 +25,11 @@ def upload_text(path):
     output = loader.load_and_split(
         CharacterTextSplitter(separator=['\n\n', '\n', '. ', ' ']))
     supa = SupabaseVectorStore.from_documents(
-        output, OpenAIEmbeddings(),
-        supabase_client, 'documents_new')
+                output, 
+                OpenAIEmbeddings(),
+                supabase_client, 
+                'documents_new',
+        )
     print(supa)
 
 def upload_pdf(path):

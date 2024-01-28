@@ -1,5 +1,4 @@
 import os
-from flask import Flask, request, jsonify
 from langchain_openai import OpenAIEmbeddings
 from langchain.vectorstores.supabase import SupabaseVectorStore
 from langchain.prompts import PromptTemplate
