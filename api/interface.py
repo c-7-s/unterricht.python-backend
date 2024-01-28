@@ -5,11 +5,9 @@ from werkzeug.utils import secure_filename
 from api.files_service import allowed_file, upload_text, upload_pdf
 from api.ai_service import getanswer
 
-from utils.utils import read_yaml_config
+from config import interface_config
 
-job_config = read_yaml_config("config/interface_config.yaml")
-
-UPLOAD_FOLDER = job_config.upload_source_folder
+UPLOAD_FOLDER = interface_config.upload_source_folder
 
 backend_api = Flask(__name__)
 
