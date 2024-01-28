@@ -5,9 +5,13 @@ from werkzeug.utils import secure_filename
 from api.files_service import allowed_file, upload_text, upload_pdf
 from api.ai_service import getanswer
 
-backend_api = Flask(__name__)
+import utils
 
-UPLOAD_FOLDER = 'docs/'
+job_config = utils.read_yaml_config("config/interface_config.yaml")
+
+UPLOAD_FOLDER = job_config.upload_source_folder
+
+backend_api = Flask(__name__)
 
 backend_api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 backend_api.secret_key = "alklkjhasdkjfhkasljd"
@@ -31,8 +35,7 @@ def upload_file():
             upload_text(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
         elif file.mimetype == 'application/pdf':
             upload_pdf(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
-        os.remove(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
-        return jsonify({'message': 'File uploaded successfully'}), 200
+        return jsonify({'success': 'File uploaded successfully'}), 200
     return jsonify({'error': 'Unsupported file type'}), 400
 
 # Beispielroute für das Stellen einer Frage
@@ -41,14 +44,14 @@ def processclaim():
     try:
         input_json = request.get_json(force=True)
         if 'query' not in request.get_json(force=True):
-            return jsonify({"Status":"Failure --- no query given"}), 400
+            return jsonify({"error": "no query given"}), 400
         query = input_json["query"]
         if query == "":
-            return jsonify({"Status":"Failure --- empty query given"}), 400
+            return jsonify({"error": "empty query given"}), 400
         output=getanswer(query)
         return output
     except:
-        return jsonify({"Status":"Failure --- some error occured"}), 400
+        return jsonify({"error": "some error occured"}), 400
 
 
 if __name__ == "__main__":
