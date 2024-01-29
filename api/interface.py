@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
-from api.files_service import allowed_file, upload_text, upload_pdf
+from api.files_service import allowed_file, upload_text, upload_pdf, get_uploaded_ids
 from api.ai_service import getanswer
 
 from api.config import interface_config
@@ -26,12 +26,15 @@ def upload_file():
         return jsonify({'error': 'No file selected for uploading'}), 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
+        filepath = os.path.join(backend_api.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
         if file.mimetype == 'text/plain':
-            upload_text(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
+            upload_text(filepath)
         elif file.mimetype == 'application/pdf':
-            upload_pdf(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
-        return jsonify({'embeddings_table': interface_config.upload_table_name}), 200
+            upload_pdf(filepath)
+        os.remove(filepath)
+        id_array = get_uploaded_ids(filepath, interface_config.upload_table_name)
+        return jsonify({'id_array': id_array}), 200
     return jsonify({'error': 'Unsupported file type'}), 400
 
 # Beispielroute für das Stellen einer Frage
