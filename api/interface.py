@@ -12,6 +12,7 @@ UPLOAD_FOLDER = interface_config.upload_source_folder
 backend_api = Flask(__name__)
 
 backend_api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+backend_api.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 backend_api.secret_key = "alklkjhasdkjfhkasljd"
 
 @backend_api.route('/', methods=['GET'])
@@ -24,6 +25,8 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No file selected for uploading'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Unsupported file type'}), 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(backend_api.config["UPLOAD_FOLDER"], filename)
@@ -32,10 +35,11 @@ def upload_file():
             upload_text(filepath)
         elif file.mimetype == 'application/pdf':
             upload_pdf(filepath)
-        os.remove(filepath)
         id_array = get_uploaded_ids(filepath, interface_config.upload_table_name)
+        os.remove(filepath)
         return jsonify({'id_array': id_array}), 200
-    return jsonify({'error': 'Unsupported file type'}), 400
+
+
 
 # Beispielroute für das Stellen einer Frage
 @backend_api.route('/prompt', methods=['POST'])
