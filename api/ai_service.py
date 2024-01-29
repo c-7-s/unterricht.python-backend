@@ -56,9 +56,9 @@ def getanswer(query):
     chunk_docs=[]
     for chunk in relevant_chunks:
         chunk_docs.append(chunk[0])
-    results = chain({"context": chunk_docs, "question": query})
+    results = chain({"input_documents": chunk_docs, "question": query})
     text_reference=""
-    for i in range(len(results["context"])):
-        text_reference+=results["context"][i].page_content
+    for i in range(len(results["input_documents"])):
+        text_reference+=results["input_documents"][i].page_content
     output={"Answer":results["output_text"],"Reference":text_reference}
     return output
