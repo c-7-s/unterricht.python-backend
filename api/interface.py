@@ -1,4 +1,5 @@
 import os
+import tempfile
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
@@ -7,11 +8,8 @@ from api.ai_service import getanswer
 
 from api.config import interface_config
 
-UPLOAD_FOLDER = interface_config.upload_source_folder
-
 backend_api = Flask(__name__)
 
-backend_api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 backend_api.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 backend_api.secret_key = "alklkjhasdkjfhkasljd"
 
@@ -27,19 +25,16 @@ def upload_file():
         return jsonify({'error': 'No file selected for uploading'}), 400
     if not allowed_file(file.filename):
         return jsonify({'error': 'Unsupported file type'}), 400
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(backend_api.config["UPLOAD_FOLDER"], filename)
+    filename = secure_filename(file.filename)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        filepath = os.path.join(tmpdirname, filename)
         file.save(filepath)
         if file.mimetype == 'text/plain':
             upload_text(filepath)
         elif file.mimetype == 'application/pdf':
             upload_pdf(filepath)
         id_array = get_uploaded_ids(filepath, interface_config.upload_table_name)
-        os.remove(filepath)
-        return jsonify({'id_array': id_array}), 200
-
-
+    return jsonify({'id_array': id_array}), 200
 
 # Beispielroute für das Stellen einer Frage
 @backend_api.route('/prompt', methods=['POST'])
