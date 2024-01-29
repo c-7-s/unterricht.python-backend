@@ -42,3 +42,7 @@ def upload_pdf(path):
         table_name=interface_config.upload_table_name,
     )
     print(supa)
+
+def get_uploaded_ids(filepath, upload_table_name):
+    data, _cnt = supabase_client.table(upload_table_name).select('id').contains('metadata', {'source':filepath}).execute()
+    return [data[1][i].get("id") for i in range(len(data[1]))]
