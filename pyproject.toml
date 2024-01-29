@@ -27,6 +27,7 @@ scikit-learn = "*"
 gunicorn = "*"
 pydantic = "*"
 simsimd = "*"
+pandas = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.0"
