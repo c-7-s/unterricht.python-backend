@@ -1,20 +1,20 @@
-import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores.supabase import SupabaseVectorStore
-from langchain.embeddings.openai import OpenAIEmbeddings
-from dotenv import load_dotenv
-from supabase.client import create_client, Client
+from langchain_openai import OpenAIEmbeddings
 
-load_dotenv("../.env")
+from api.config import interface_config
+from utils.utils import initialize_environment_variables, initialize_subabase_client, initialize_openai_client
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
+initialize_environment_variables("../.env")
 
 # Initialize Supabase Client
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_API_KEY")
-supabase_client: Client = create_client(url, key)
+supabase_client = initialize_subabase_client()
+
+# Initialize OpenAI Client
+openai_client = initialize_openai_client()
+
+ALLOWED_EXTENSIONS = set(interface_config.upload_allowed_formats)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -28,7 +28,7 @@ def upload_text(path):
                 output, 
                 OpenAIEmbeddings(),
                 supabase_client, 
-                'documents_new',
+                interface_config.upload_table_name,
         )
     print(supa)
 
@@ -39,6 +39,6 @@ def upload_pdf(path):
     supa = SupabaseVectorStore.from_documents(
         output, OpenAIEmbeddings(),
         client=supabase_client,
-        table_name="documents_new",
+        table_name=interface_config.upload_table_name,
     )
     print(supa)

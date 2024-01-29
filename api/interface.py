@@ -21,8 +21,6 @@ def status():
 # Beispielroute für das Hochladen einer Datei
 @backend_api.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.get_json(force=True):
-        return jsonify({'error': 'No file part in the request'}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No file selected for uploading'}), 400
@@ -33,7 +31,7 @@ def upload_file():
             upload_text(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
         elif file.mimetype == 'application/pdf':
             upload_pdf(os.path.join(backend_api.config["UPLOAD_FOLDER"], filename))
-        return jsonify({'success': 'File uploaded successfully'}), 200
+        return jsonify({'embeddings_table': interface_config.upload_table_name}), 200
     return jsonify({'error': 'Unsupported file type'}), 400
 
 # Beispielroute für das Stellen einer Frage
