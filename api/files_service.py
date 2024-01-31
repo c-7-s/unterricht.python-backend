@@ -2,7 +2,6 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores.supabase import SupabaseVectorStore
 from langchain_openai import OpenAIEmbeddings
-
 from api.config import interface_config
 from utils.utils import initialize_environment_variables, initialize_subabase_client, initialize_openai_client
 
@@ -30,7 +29,7 @@ def upload_text(path):
                 supabase_client, 
                 interface_config.upload_table_name,
         )
-    print(supa)
+    return None
 
 def upload_pdf(path):
     loader = PyPDFLoader(path)
@@ -41,7 +40,7 @@ def upload_pdf(path):
         client=supabase_client,
         table_name=interface_config.upload_table_name,
     )
-    print(supa)
+    return None
 
 def get_uploaded_ids(filepath, upload_table_name):
     data, _cnt = supabase_client.table(upload_table_name).select('id').contains('metadata', {'source':filepath}).execute()

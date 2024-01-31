@@ -34,7 +34,7 @@ def upload_file():
         elif file.mimetype == 'application/pdf':
             upload_pdf(filepath)
         id_array = get_uploaded_ids(filepath, interface_config.upload_table_name)
-    return jsonify({'id_array': id_array}), 200
+    return jsonify({'vector_store_ids': id_array}), 200
 
 # Beispielroute für das Stellen einer Frage
 @backend_api.route('/prompt', methods=['POST'])
