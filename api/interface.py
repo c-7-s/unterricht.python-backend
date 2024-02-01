@@ -1,9 +1,9 @@
 import os
 import tempfile
+import mimetypes
 from flask import Flask, request, jsonify
-from werkzeug.utils import secure_filename
 
-from api.files_service import allowed_file, upload_text, upload_pdf, get_uploaded_ids
+from api.files_service import allowed_file, download_file_from_bucket, upload_text, upload_pdf, get_uploaded_ids
 from api.ai_service import getanswer
 
 from api.config import interface_config
@@ -20,28 +20,35 @@ def status():
 # Beispielroute für das Hochladen einer Datei
 @backend_api.route('/upload', methods=['POST'])
 def upload_file():
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected for uploading'}), 400
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Unsupported file type'}), 400
-    filename = secure_filename(file.filename)
+    input_json = request.get_json(force=True)
+    if 'fullPath' not in input_json:
+        return jsonify({"error": "'fullPath' key missing"}), 400
+    elif 'path' not in input_json:
+        return jsonify({"error": "'path' key missing"}), 400
+    full_path, user_path = input_json["fullPath"], input_json["path"]
+    if full_path == "":
+        return jsonify({"error": "'fullPath' value missing"}), 400
+    elif user_path == "":
+        return jsonify({"error": "'path' value missing"}), 400
+    file_name = os.path.basename(user_path)
+    if not allowed_file(file_name):
+        return jsonify({"error": "file type not supported"}), 400
     with tempfile.TemporaryDirectory() as tmpdirname:
-        filepath = os.path.join(tmpdirname, filename)
-        file.save(filepath)
-        if file.mimetype == 'text/plain':
-            upload_text(filepath)
-        elif file.mimetype == 'application/pdf':
-            upload_pdf(filepath)
-        id_array = get_uploaded_ids(filepath, interface_config.upload_table_name)
-    return jsonify({'vector_store_ids': id_array}), 200
+        file_path = os.path.join(tmpdirname, file_name)
+        download_file_from_bucket(file_path)
+        if mimetypes.guess_type(file_path) == 'text/plain':
+            upload_text(file_path)
+        elif mimetypes.guess_type(file_path) == 'application/pdf':
+            upload_pdf(file_path)
+        vector_store_ids = get_uploaded_ids(file_path, interface_config.upload_table_name)
+    return jsonify({'vector_store_ids': vector_store_ids}), 200
 
 # Beispielroute für das Stellen einer Frage
 @backend_api.route('/prompt', methods=['POST'])
 def processclaim():
     try:
         input_json = request.get_json(force=True)
-        if 'query' not in request.get_json(force=True):
+        if 'fullPath' not in request.get_json(force=True):
             return jsonify({"error": "no query given"}), 400
         query = input_json["query"]
         if query == "":
