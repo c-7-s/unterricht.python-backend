@@ -20,7 +20,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def upload_text(path):
-    loader = TextLoader(path)
+    loader = TextLoader(path, autodetect_encoding=True)
     output = loader.load_and_split(
         CharacterTextSplitter(separator=['\n\n', '\n', '. ', ' ']))
     supa = SupabaseVectorStore.from_documents(
@@ -32,7 +32,7 @@ def upload_text(path):
     return None
 
 def upload_pdf(path):
-    loader = PyPDFLoader(path)
+    loader = PyPDFLoader(path, autodetect_encoding=True)
     output = loader.load_and_split(
         CharacterTextSplitter(separator='. '))
     supa = SupabaseVectorStore.from_documents(
@@ -45,3 +45,10 @@ def upload_pdf(path):
 def get_uploaded_ids(filepath, upload_table_name):
     data, _cnt = supabase_client.table(upload_table_name).select('id').contains('metadata', {'source':filepath}).execute()
     return [data[1][i].get("id") for i in range(len(data[1]))]
+
+def download_file_from_bucket(destination: str, full_path: str, path: str):
+    full_path_list = full_path.split("/")
+    bucket_name = full_path_list[0]
+    with open(destination, 'wb+') as f:
+        storage_file = supabase_client.storage.from_(bucket_name).download(path)
+        f.write(storage_file)
