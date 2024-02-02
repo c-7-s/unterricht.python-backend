@@ -81,7 +81,7 @@ Aufgabe:
 {task}
 """
 
-def get_answer(prompt_input: Dict[str: Any]):
+def get_answer(prompt_input):
     initialize_environment_variables("../.env")
 
     # Initialize Supabase Client
