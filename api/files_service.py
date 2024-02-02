@@ -19,26 +19,28 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def upload_text(path):
-    loader = TextLoader(path, autodetect_encoding=True)
+def upload_text(path) -> None:
+    loader = TextLoader(path)
     output = loader.load_and_split(
         CharacterTextSplitter(separator=['\n\n', '\n', '. ', ' ']))
-    supa = SupabaseVectorStore.from_documents(
-                output, 
-                OpenAIEmbeddings(),
-                supabase_client, 
-                interface_config.upload_table_name,
-        )
+    _upload = SupabaseVectorStore.from_documents(
+        output, 
+        OpenAIEmbeddings(),
+        supabase_client, 
+        interface_config.upload_table_name,
+        chunk_size=500,
+    )
     return None
 
 def upload_pdf(path):
     loader = PyPDFLoader(path)
     output = loader.load_and_split(
         CharacterTextSplitter(separator='. '))
-    supa = SupabaseVectorStore.from_documents(
+    _upload = SupabaseVectorStore.from_documents(
         output, OpenAIEmbeddings(),
         client=supabase_client,
         table_name=interface_config.upload_table_name,
+        chunk_size=500,
     )
     return None
 
