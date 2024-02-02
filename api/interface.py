@@ -2,6 +2,7 @@ import os
 import tempfile
 import mimetypes
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 
 from api.files_service import allowed_file, download_file_from_bucket, upload_text, upload_pdf, get_uploaded_ids
 from api.ai_service import getanswer
@@ -35,6 +36,7 @@ def upload_file():
         return jsonify({"error": "file type not supported"}), 400
     with tempfile.TemporaryDirectory() as tmpdirname:
         file_path = os.path.join(tmpdirname, file_name)
+        file_path = secure_filename(file_path)
         download_file_from_bucket(file_path, full_path, user_path)
         if mimetypes.guess_type(file_path) == 'text/plain':
             upload_text(file_path)
