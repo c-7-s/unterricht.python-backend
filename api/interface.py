@@ -63,6 +63,7 @@ def processclaim():
         if 'context' not in request.get_json(force=True):
             return jsonify({"error": "'context' key missing"}), 400
         output = get_answer(input_json)
+        output = json.dumps(output)
         return output
     except:
         return jsonify({"error": "some error occured"}), 400
