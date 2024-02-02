@@ -65,12 +65,12 @@ def create_prompt_template(retrieved_context: List[Any], task: str) -> str:
     return f"""
 Du bist ein Assistent für Lehrende und deine Aufgabe ist Unterricht nach den höchsten Standards vorzubereiten. 
 Schlüsselwöter helfen dir bei der Lösung der Aufgabe den Fokus richtig zu wählen.
-Die Lehrkraft gibt dir wichtigen Kontext zur Lösung der Aufgabe. 
+Die Lehrkraft stellt dir wichtigen Kontext zur Lösung der Aufgabe in deiner Bibliothek zur Verfügung. 
 Die Lösung der Aufgabe soll in jedem Fall eine inhaltliche und zeitliche Struktur für den Unterricht beinhalten.
 Wenn du keine Lösung findest, sage einfach, dass du die Aufgabe nicht lösen kannst, und versuche keine Antwort zu erfinden.
-Hier ist ein Ausschnitt aus dem Kontext aus deiner Bibliothek:
+Hier ist ein relevanter Ausschnitt aus dem Kontext aus deiner Bibliothek:
 
-Kontext:
+Ausschnitt aus dem Kontext:
 ---------
 {retrieved_context}
 ---------
@@ -97,12 +97,10 @@ def get_answer(prompt_input: Dict[str: Any]):
 
     task = create_task_string(school_type, subject, topic, grade, state, keywords)
 
-    filter_list = create_filter_list(context)
-
     embedding = OpenAIEmbeddings()
     vector_store = initialize_vector_store(supabase_client, embedding, interface_config.upload_table_name, interface_config.supabase_match_function)
 
-    retrieved_context = vector_store.similarity_search(task,k=2,filter=filter_list)
+    retrieved_context = vector_store.similarity_search(task, k=2, filter=context)
 
     prompt_template = create_prompt_template(retrieved_context, task)
 
@@ -111,12 +109,12 @@ def get_answer(prompt_input: Dict[str: Any]):
     search = TavilySearchAPIWrapper()
     tavily_tool = TavilySearchResults(api_wrapper=search, max_results=5)
 
-    retriever = vector_store.as_retriever(search_type="mmr", search_kwargs={"k": 4, 'lambda_mult': 0.25, 'filter': filter_list})
+    retriever = vector_store.as_retriever(search_type="mmr", search_kwargs={"k": 4, 'lambda_mult': 0.25, 'filter': {'uuid': context}})
 
     retriever_tool = create_retriever_tool(
     retriever,
     "get_more_context",
-    "Retrieve more relevant context information from library.",
+    "A personal library optimized for the most relevant results. Useful for when you need to know more about the given context. Input should be a search query.",
     )
 
     tools = [retriever_tool, tavily_tool]

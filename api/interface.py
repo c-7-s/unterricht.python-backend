@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
 from api.files_service import allowed_file, download_file_from_bucket, upload_text, upload_pdf, get_uploaded_ids
-from api.ai_service import getanswer
+from api.agent_service import get_answer
 
 from api.config import interface_config
 
@@ -48,12 +48,21 @@ def upload_file():
 def processclaim():
     try:
         input_json = request.get_json(force=True)
-        if 'fullPath' not in request.get_json(force=True):
-            return jsonify({"error": "no query given"}), 400
-        query = input_json["query"]
-        if query == "":
-            return jsonify({"error": "empty query given"}), 400
-        output=getanswer(query)
+        if 'school_type' not in request.get_json(force=True):
+            return jsonify({"error": "'school_type' key missing"}), 400
+        if 'subject' not in request.get_json(force=True):
+            return jsonify({"error": "'subject' key missing"}), 400
+        if 'topic' not in request.get_json(force=True):
+            return jsonify({"error": "'topic' key missing"}), 400
+        if 'grade' not in request.get_json(force=True):
+            return jsonify({"error": "'grade' key missing"}), 400
+        if 'state' not in request.get_json(force=True):
+            return jsonify({"error": "'state' key missing"}), 400
+        if 'keywords' not in request.get_json(force=True):
+            return jsonify({"error": "'keywords' key missing"}), 400
+        if 'context' not in request.get_json(force=True):
+            return jsonify({"error": "'context' key missing"}), 400
+        output=get_answer(input_json)
         return output
     except:
         return jsonify({"error": "some error occured"}), 400
