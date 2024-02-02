@@ -32,7 +32,7 @@ def upload_text(path):
     return None
 
 def upload_pdf(path):
-    loader = PyPDFLoader(path, autodetect_encoding=True)
+    loader = PyPDFLoader(path)
     output = loader.load_and_split(
         CharacterTextSplitter(separator='. '))
     supa = SupabaseVectorStore.from_documents(
