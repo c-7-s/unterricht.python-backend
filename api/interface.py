@@ -35,7 +35,7 @@ def upload_file():
         return jsonify({"error": "file type not supported"}), 400
     with tempfile.TemporaryDirectory() as tmpdirname:
         file_path = os.path.join(tmpdirname, file_name)
-        download_file_from_bucket(file_path)
+        download_file_from_bucket(file_path, full_path, user_path)
         if mimetypes.guess_type(file_path) == 'text/plain':
             upload_text(file_path)
         elif mimetypes.guess_type(file_path) == 'application/pdf':
