@@ -119,14 +119,19 @@ def get_answer(prompt_input):
 
     tools = [retriever_tool, tavily_tool]
 
-    llm = ChatOpenAI(model_name="gpt-4", temperature=0.5)
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7)
     agent = create_openai_functions_agent(llm, tools, prompt)
 
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_steps=True)
 
     response = agent_executor.invoke({"input": prompt_template})
 
-    response["context"] = retrieved_context
+    context_dict = [doc.dict() for doc in retrieved_context]
 
-    return response
+    output = {}
+    output["input"] = response["input"]
+    output["ouput"] = response["output"]
+    output["context"] = context_dict
+
+    return output
 

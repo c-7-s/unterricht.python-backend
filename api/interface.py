@@ -1,5 +1,5 @@
 import os
-import tempfile
+import json
 import mimetypes
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
@@ -62,7 +62,7 @@ def processclaim():
             return jsonify({"error": "'keywords' key missing"}), 400
         if 'context' not in request.get_json(force=True):
             return jsonify({"error": "'context' key missing"}), 400
-        output=get_answer(input_json)
+        output = get_answer(input_json)
         return output
     except:
         return jsonify({"error": "some error occured"}), 400
