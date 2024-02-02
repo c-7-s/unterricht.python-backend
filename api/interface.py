@@ -2,6 +2,7 @@ import os
 import tempfile
 import mimetypes
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 
 from api.files_service import allowed_file, download_file_from_bucket, upload_text, upload_pdf, get_uploaded_ids
 from api.ai_service import getanswer
@@ -33,14 +34,13 @@ def upload_file():
     file_name = os.path.basename(user_path)
     if not allowed_file(file_name):
         return jsonify({"error": "file type not supported"}), 400
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        file_path = os.path.join(tmpdirname, file_name)
-        download_file_from_bucket(file_path, full_path, user_path)
-        if mimetypes.guess_type(file_path) == 'text/plain':
-            upload_text(file_path)
-        elif mimetypes.guess_type(file_path) == 'application/pdf':
-            upload_pdf(file_path)
-        vector_store_ids = get_uploaded_ids(file_path, interface_config.upload_table_name)
+    file_path = secure_filename(user_path)
+    download_file_from_bucket(file_path, full_path, user_path)
+    if mimetypes.guess_type(file_path)[0] == 'text/plain':
+        upload_text(file_path)
+    elif mimetypes.guess_type(file_path)[0] == 'application/pdf':
+        upload_pdf(file_path)
+    vector_store_ids = get_uploaded_ids(file_path, interface_config.upload_table_name)
     return jsonify({'vector_store_ids': vector_store_ids}), 200
 
 # Beispielroute für das Stellen einer Frage
