@@ -66,7 +66,7 @@ def create_prompt_template(retrieved_context: List[Any], task: str) -> str:
 Du bist ein Assistent für Lehrende und deine Aufgabe ist Unterricht nach den höchsten Standards vorzubereiten. 
 Schlüsselwöter helfen dir bei der Lösung der Aufgabe den Fokus richtig zu wählen.
 Die Lehrkraft stellt dir wichtigen Kontext zur Lösung der Aufgabe in deiner Bibliothek zur Verfügung. 
-Die Lösung der Aufgabe soll in jedem Fall eine inhaltliche und zeitliche Struktur für den Unterricht beinhalten.
+Die Lösung der Aufgabe soll in jedem Fall eine inhaltliche und zeitliche Struktur - insgesamt 45 min - für den Unterricht beinhalten.
 Wenn du keine Lösung findest, sage einfach, dass du die Aufgabe nicht lösen kannst, und versuche keine Antwort zu erfinden.
 Hier ist ein relevanter Ausschnitt aus dem Kontext aus deiner Bibliothek:
 
@@ -76,6 +76,19 @@ Ausschnitt aus dem Kontext:
 ---------
 
 Los geht's!
+
+Die Antwort muss der folgenden json-Struktur entsprechen:
+______________________________
+
+{{
+    "learn_goals": "xyz",
+    "table_data": [
+        {{"title": "abc", "duration": "10min", "content": "blabla"}},
+        {{...}},
+        {{...}}
+    ]
+}}
+______________________________
 
 Aufgabe: 
 {task}
@@ -119,7 +132,7 @@ def get_answer(prompt_input):
 
     tools = [retriever_tool, tavily_tool]
 
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7)
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=2)
     agent = create_openai_functions_agent(llm, tools, prompt)
 
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_steps=True)
