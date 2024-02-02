@@ -126,7 +126,10 @@ def get_answer(prompt_input):
 
     response = agent_executor.invoke({"input": prompt_template})
 
-    context_dict = [doc.dict() for doc in retrieved_context]
+    if len(context_dict) > 0:
+        context_dict = [doc.dict() for doc in retrieved_context]
+    else:
+        context_dict = {}
 
     output = {}
     output["input"] = response["input"]
