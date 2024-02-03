@@ -7,21 +7,24 @@ class InterfaceConfig(BaseModel):
     supabase_match_function: str
     gpt_model_version: str
     gpt_model_temperature: float
+    prompt_template_name: str
     context_k: int
     retriever_k: int
     retriever_mult: float
     retriever_search_type: str
     tavily_max_response: int
 
+
 interface_config = InterfaceConfig(
     upload_allowed_formats=["txt", "pdf"],
     upload_table_name="vector_store",
     supabase_match_function="match_documents_with_uuid_filter",
     gpt_model_version="gpt-3.5-turbo-1106",
-    gpt_model_temperature=1.0,
+    gpt_model_temperature=0.5,
     context_k=1,
     retriever_k=3,
     retriever_mult=0.25,
     retriever_search_type="mmr",
-    tavily_max_response=5
+    tavily_max_response=5,
+    prompt_template_name="c-7-s/openai-functions-agent-education"
 )
