@@ -66,7 +66,6 @@ def processclaim():
             output = get_answer(input_json)
         except Exception as e:
             return jsonify({"error": f"error: {e}"}), 400
-        output = json.dumps(output)
         return output
     except:
         return jsonify({"error": "some error occured"}), 400
