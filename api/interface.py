@@ -4,8 +4,8 @@ import mimetypes
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
-from api.files_service import allowed_file, download_file_from_bucket, upload_text, upload_pdf, get_uploaded_ids
-from api.agent_service import get_answer
+import api.files_service as fs
+import api.agent_service as ags
 
 from api.config import interface_config
 
@@ -32,15 +32,18 @@ def upload_file():
     elif user_path == "":
         return jsonify({"error": "'path' value missing"}), 400
     file_name = os.path.basename(user_path)
-    if not allowed_file(file_name):
+    if not fs.allowed_file(file_name):
         return jsonify({"error": "file type not supported"}), 400
     file_path = secure_filename(user_path)
-    download_file_from_bucket(file_path, full_path, user_path)
-    if mimetypes.guess_type(file_path)[0] == 'text/plain':
-        upload_text(file_path)
-    elif mimetypes.guess_type(file_path)[0] == 'application/pdf':
-        upload_pdf(file_path)
-    vector_store_ids = get_uploaded_ids(file_path, interface_config.upload_table_name)
+    fs.download_file_from_bucket(file_path, full_path, user_path)
+    try:
+        if mimetypes.guess_type(file_path)[0] == 'text/plain':
+            fs.upload_text(file_path)
+        elif mimetypes.guess_type(file_path)[0] == 'application/pdf':
+            fs.upload_pdf(file_path)
+    except Exception as e:
+        return jsonify({"error": f"error: {e}"}), 400
+    vector_store_ids = fs.get_uploaded_ids(file_path, interface_config.upload_table_name)
     return jsonify({'vector_store_ids': vector_store_ids}), 200
 
 # Beispielroute für das Stellen einer Frage
@@ -63,7 +66,7 @@ def processclaim():
         if 'context' not in request.get_json(force=True):
             return jsonify({"error": "'context' key missing"}), 400
         try:
-            output = get_answer(input_json)
+            output = ags.get_answer(input_json)
         except Exception as e:
             return jsonify({"error": f"error: {e}"}), 400
         return output

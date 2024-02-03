@@ -1,6 +1,5 @@
 from supabase.client import Client
 from typing import Dict, Any, Tuple, List
-from langchain import hub
 from langchain_openai import OpenAIEmbeddings
 from langchain.vectorstores.supabase import SupabaseVectorStore
 from langchain.agents import AgentExecutor, create_openai_functions_agent
@@ -9,41 +8,16 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_openai import ChatOpenAI
 from langchain.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain.tools.tavily_search import TavilySearchResults
+from langchain.tools import DuckDuckGoSearchResults
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
 import json
 
 from utils.utils import initialize_environment_variables, initialize_subabase_client, initialize_openai_client
 from utils.utils import initialize_tavily_client
+import api.prompt_engineering  as pe
 from api.config import interface_config
-
-def unpack_prompt_input(input: Dict[str, Any]) -> Tuple[str, str, str, str, List[str], List[str]]:
-    school_type = str(input.get("subject"))
-    subject = str(input.get("subject"))
-    topic = str(input.get("topic"))
-    grade = str(input.get("grade"))
-    state = str(input.get("state"))
-    keywords = [str(i) for i in input.get("keywords")]
-    context = [str(i) for i in input.get("context")]
-    return school_type, subject, topic, grade, state, keywords, context
-
-
-def create_task_string(school_type: str, subject: str, topic: str, grade: str, state: str) -> str:
-    return f"""
-Schritt 1: Plane eine Unterrichtsstunde im Fach {subject} zum Thema {topic} für eine {grade} Klasse in {state} für den Schultyp {school_type}!
-Schritt 2: Formatiere deine Antwort in der folgenden json-Struktur:
-______________________________
-
-{{
-    "learn_goals": "xyz",
-    "table_data": [
-        {{"title": "abc", "duration": "10min", "content": "blabla"}},
-        {{...}},
-        {{...}}
-    ]
-}}
-______________________________
-
-Los geht's!
-"""
 
 
 def get_uploaded_ids(supabase_client, filepath, upload_table_name):
@@ -71,33 +45,6 @@ def initialize_vector_store(client: Client, embedding: OpenAIEmbeddings, table_n
     return vector_store
 
 
-def create_prompt_template(retrieved_context: List[Any], keywords, topic, task: str) -> str:
-    keywords = '\n'.join(keywords)
-    return f"""
-Du bist ein Assistent für Lehrkräfte und deine Aufgabe ist Unterricht strukturiert, detailliert und fachlich korrekt vorzubereiten.
-
-Lernziel:
-------------------
-{topic}
-{keywords}
-------------------
-
-Die Lehrkraft stellt dir Kontext zur Lösung der Aufgabe in deiner Bibliothek zur Verfügung. 
-Hier ist ein kurzer Ausschnitt aus dem Kontext in deiner Bibliothek:
-
-Ausschnitt aus dem Kontext:
----------
-{retrieved_context}
----------
-
-Die Gesamtlänge des Unterrichts soll insgesamt 45 Minuten betragen.
-Alle Schritte der Aufgabe inklusive des Planens der Unterrichtsstunde müssen ohne Rückfragen ausgeführt werden. 
-Wenn du dir nicht sicher bist, erfinde eine Antwort.
-
-Aufgabe: 
-{task}
-"""
-
 def get_answer(prompt_input):
     initialize_environment_variables("../.env")
 
@@ -110,27 +57,33 @@ def get_answer(prompt_input):
     # Initialize Tavily Client
     _tavily_client = initialize_tavily_client()
 
-    school_type, subject, topic, grade, state, keywords, context = unpack_prompt_input(prompt_input)
+    school_type, subject, topic, grade, state, keywords, context = pe.unpack_prompt_input(prompt_input)
 
-    task = create_task_string(school_type, subject, topic, grade, state)
+    output_table_format = pe.create_output_table_format()
+    
+    task = pe.create_task_string(school_type, subject, topic, grade, state, output_table_format)
 
     embedding = OpenAIEmbeddings()
     vector_store = initialize_vector_store(supabase_client, embedding, interface_config.upload_table_name, interface_config.supabase_match_function)
 
     retrieved_context = vector_store.similarity_search(task, k=interface_config.context_k, filter=context)
 
-    prompt_template = create_prompt_template(retrieved_context, keywords, topic, task)
-
-    prompt = hub.pull("hwchase17/openai-functions-agent")
+    prompt = pe.pull_prompt_template(interface_config.prompt_template_name)
 
     search = TavilySearchAPIWrapper()
     tavily_tool = TavilySearchResults(api_wrapper=search, max_results=interface_config.tavily_max_response)
 
+    wrapper = DuckDuckGoSearchAPIWrapper(region="de-de", time="d", max_results=5)
+    duckduck = DuckDuckGoSearchResults(api_wrapper=wrapper)
+
+    api_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=100)
+    wikipedia = WikipediaQueryRun(api_wrapper=api_wrapper)
+
     retriever = vector_store.as_retriever(search_type=interface_config.retriever_search_type, 
-                                          search_kwargs={
-                                              "k": interface_config.retriever_k,
-                                              'lambda_mult': interface_config.retriever_mult, 
-                                              'filter': {'uuid': context}
+                                            search_kwargs={
+                                                "k": int(round(len(context)/2,0)), # interface_config.retriever_k
+                                                'lambda_mult': interface_config.retriever_mult, 
+                                                'filter': {'uuid': context}
                                                 }
                                             )
 
@@ -140,14 +93,14 @@ def get_answer(prompt_input):
     "A personal library optimized for user defined context information. Useful for when you need to know more about the given context. Input should be a search query.",
     )
 
-    tools = [retriever_tool, tavily_tool]
+    tools = [retriever_tool, tavily_tool, duckduck, wikipedia]
 
     llm = ChatOpenAI(model_name=interface_config.gpt_model_version, temperature=interface_config.gpt_model_temperature)
     agent = create_openai_functions_agent(llm, tools, prompt)
 
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    response = agent_executor.invoke({"input": prompt_template})
+    response = agent_executor.invoke({"input": task, "topic": topic, "retrieved_context": retrieved_context, "keywords": keywords, "chat_history": []})
 
     output = {}
     output["output"] = response["output"]
