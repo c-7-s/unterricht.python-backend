@@ -10,6 +10,8 @@ class InterfaceConfig(BaseModel):
     context_k: int
     retriever_k: int
     retriever_mult: float
+    retriever_search_type: str
+    tavily_max_response: int
 
 interface_config = InterfaceConfig(
     upload_allowed_formats=["txt", "pdf"],
@@ -17,8 +19,9 @@ interface_config = InterfaceConfig(
     supabase_match_function="match_documents_with_uuid_filter",
     gpt_model_version="gpt-3.5-turbo-1106",
     gpt_model_temperature=0.7,
-    context_k=3,
-    retriever_k=5,
+    context_k=1,
+    retriever_k=3,
     retriever_mult=0.25,
-
+    retriever_search_type="mmr",
+    tavily_max_response=10
 )
