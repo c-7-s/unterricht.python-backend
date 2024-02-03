@@ -18,10 +18,10 @@ interface_config = InterfaceConfig(
     upload_table_name="vector_store",
     supabase_match_function="match_documents_with_uuid_filter",
     gpt_model_version="gpt-3.5-turbo-1106",
-    gpt_model_temperature=0.7,
+    gpt_model_temperature=1.0,
     context_k=1,
     retriever_k=3,
     retriever_mult=0.25,
     retriever_search_type="mmr",
-    tavily_max_response=10
+    tavily_max_response=5
 )

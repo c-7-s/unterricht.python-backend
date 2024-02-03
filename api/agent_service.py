@@ -26,10 +26,9 @@ def unpack_prompt_input(input: Dict[str, Any]) -> Tuple[str, str, str, str, List
     return school_type, subject, topic, grade, state, keywords, context
 
 
-def create_task_string(school_type: str, subject: str, topic: str, grade: str, state: str, keywords:List[str]) -> str:
-    keywords = '\n'.join(keywords)
+def create_task_string(school_type: str, subject: str, topic: str, grade: str, state: str) -> str:
     return f"""
-Schritt 1: Plane eine Unterrichtsstunde im Fach {subject} zum Thema {topic} für eine {grade} Klasse in {state} für den Schultyp {school_type} mit den Informationen aus Schritt 1 und Schritt 2.
+Schritt 1: Plane eine Unterrichtsstunde im Fach {subject} zum Thema {topic} für eine {grade} Klasse in {state} für den Schultyp {school_type}!
 Schritt 2: Formatiere deine Antwort in der folgenden json-Struktur:
 ______________________________
 
@@ -73,13 +72,11 @@ def initialize_vector_store(client: Client, embedding: OpenAIEmbeddings, table_n
 
 
 def create_prompt_template(retrieved_context: List[Any], keywords, topic, task: str) -> str:
+    keywords = '\n'.join(keywords)
     return f"""
 Du bist ein Assistent für Lehrkräfte und deine Aufgabe ist Unterricht strukturiert, detailliert und fachlich korrekt vorzubereiten.
-Alle Schritte der Aufgabe inklusive des Planens der Unterrichtsstunde müssen ohne Rückfragen ausgeführt werden.
 
-Schlüsselbegriffe helfen dir bei der Lösung der Aufgabe den richtigen Fokus zu wählen.
-
-Schlüsselbegriffe:
+Lernziel:
 ------------------
 {topic}
 {keywords}
@@ -94,6 +91,8 @@ Ausschnitt aus dem Kontext:
 ---------
 
 Die Gesamtlänge des Unterrichts soll insgesamt 45 Minuten betragen.
+Alle Schritte der Aufgabe inklusive des Planens der Unterrichtsstunde müssen ohne Rückfragen ausgeführt werden. 
+Wenn du dir nicht sicher bist, erfinde eine Antwort.
 
 Aufgabe: 
 {task}
@@ -113,7 +112,7 @@ def get_answer(prompt_input):
 
     school_type, subject, topic, grade, state, keywords, context = unpack_prompt_input(prompt_input)
 
-    task = create_task_string(school_type, subject, topic, grade, state, keywords)
+    task = create_task_string(school_type, subject, topic, grade, state)
 
     embedding = OpenAIEmbeddings()
     vector_store = initialize_vector_store(supabase_client, embedding, interface_config.upload_table_name, interface_config.supabase_match_function)
